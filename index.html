@@ -78,6 +78,7 @@ textarea:focus{border-color:var(--acc);box-shadow:0 0 0 4px rgba(214,25,108,.18)
 .sw{margin:0;padding:9px 16px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
 .sw.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 #res{display:grid;gap:12px}
+#wn{margin:0;padding:12px 14px;border-radius:14px;background:rgba(255,184,0,.18);font-size:.9rem;color:var(--ink)}
 details{color:var(--mut)}summary{cursor:pointer;margin-bottom:10px}
 .view section:has(>.cr){display:none}
 body:not(.view) #mk{display:none}
@@ -102,14 +103,15 @@ body:not(.view) #mk{display:none}
   <h2>Tạo trang chúc của bạn ✍️</h2>
   <p class="lead">Điền vài dòng, chọn giao diện rồi gửi link cho người nhận. Bản xem trước nằm ngay bên dưới.</p>
   <div class="glass form">
-    <label>Tên người nhận<input id="rn" maxlength="24" placeholder="VD: Lan (để trống nếu tặng cả team)"></label>
+    <div class="grp">Gửi cho<div class="chips" id="kd"><button class="sw on" data-k="0">👩 Cá nhân</button><button class="sw" data-k="1">🏆 CLB</button><button class="sw" data-k="2">👥 Team</button></div></div>
+    <label><span id="rl">Tên người nhận</span><input id="rn" maxlength="30" placeholder="VD: Lan"></label>
     <label>Người gửi<input id="sn" maxlength="24" placeholder="VD: Minh, Cả team…"></label>
     <label>Lời chúc<textarea id="msg" maxlength="280" rows="4" placeholder="Viết lời chúc của bạn, hoặc bấm gợi ý bên dưới"></textarea></label>
     <button id="rnd" class="ghost">🎲 Gợi ý lời chúc</button>
-    <div class="grp">Giao diện<div class="chips" id="th"><button class="sw on" data-t="0">🌸 Hồng sen</button><button class="sw" data-t="1">✨ Vàng kim</button><button class="sw" data-t="2">💜 Tím mộng mơ</button></div></div>
+    <div class="grp">Giao diện<div class="chips" id="th"><button class="sw on" data-t="0">🌹 Hồng phấn</button><button class="sw" data-t="1">✨ Vàng kim</button><button class="sw" data-t="2">💜 Tím mộng mơ</button></div></div>
     <div class="grp">Hiệu ứng rơi<div class="chips" id="ef"><button class="sw on" data-e="0">🌸 Hoa</button><button class="sw" data-e="1">💖 Tim</button><button class="sw" data-e="2">⭐ Sao</button></div></div>
     <button id="mkl">Tạo link trang chúc 🚀</button>
-    <div id="res" hidden><input id="lk" readonly aria-label="Link trang chúc"><div class="row"><button id="cp">Sao chép link</button><button id="cc" class="ghost">Sao chép mã</button><button id="sh" class="ghost">Chia sẻ</button><button id="pv" class="ghost">Xem thử</button></div></div>
+    <div id="res" hidden><input id="lk" readonly aria-label="Link trang chúc"><p id="wn" hidden>Đang xem trong claude.ai: nếu người nhận mở link mà chưa thấy lời chúc, hãy gửi thêm mã (nút “Sao chép mã”) để họ dán vào ô “Đã có link hoặc mã chúc?”.</p><div class="row"><button id="cp">Sao chép link</button><button id="cc" class="ghost">Sao chép mã</button><button id="sh" class="ghost">Chia sẻ</button><button id="pv" class="ghost">Xem thử</button></div></div>
     <details><summary>Đã có link hoặc mã chúc?</summary><div class="row"><input id="cd" placeholder="Dán link hoặc mã vào đây"><button id="op" class="ghost">Mở</button></div></details>
   </div>
 </div>
@@ -195,9 +197,9 @@ addEventListener('pointerdown',e=>{if(!e.target.closest('input,button,textarea,s
 // Mở quà
 let last=-1;
 function openGift(){
- const n=S.n||'cô gái tuyệt vời';let i;
+ const n=S.n||['cô gái tuyệt vời','các bạn trong CLB','các bạn nữ của team'][S.k];let i;
  do{i=Math.random()*WS.length|0}while(i===last);last=i;
- $('#to').textContent=n;$('#fr').textContent=S.f||FROM;$('#wish').textContent=S.m||WS[i];chime();
+ $('#to').textContent=n;$('#fr').textContent=S.f||['Một người bạn','Ban chủ nhiệm CLB','Cả team'][S.k];$('#wish').textContent=S.m||ra();chime();
  const c=$('#card');c.hidden=false;c.classList.remove('pop');void c.offsetWidth;c.classList.add('pop');
  c.scrollIntoView({behavior:RM?'auto':'smooth',block:'end'});if(window.onGift)onGift();
  setTimeout(()=>burst(innerWidth/2,innerHeight*.45,36),350)}
@@ -206,34 +208,38 @@ const s2=$('#s2');s2.onclick=openGift;s2.onkeydown=e=>{if(e.key==='Enter'||e.key
 let ac;function chime(){try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();[523,659,784,1047,1319].forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+i*.09;o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+.9);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+1)})}catch(x){}}
 
 // Tạo trang chúc: form → link, giao diện, hiệu ứng
-let S={n:'',f:'',m:'',t:0,e:0};
+let S={n:'',f:'',m:'',t:0,e:0,k:0};
+const WK=[WS,['Chúc các thành viên nữ của CLB luôn rạng rỡ, nhiệt huyết và giữ mãi ngọn lửa đam mê. CLB mình mạnh là nhờ có các bạn!','Cảm ơn các bạn đã góp sức, góp tiếng cười và tinh thần đồng đội cho CLB mỗi ngày. Chúc các bạn một ngày 20/10 thật trọn vẹn!','Mỗi hoạt động của CLB đều đẹp hơn nhờ có các bạn. Chúc các bạn nhiều sức khỏe, niềm vui và những chiến thắng mới!','20/10 này, CLB xin gửi tặng các bạn những lời chúc ngọt ngào nhất: luôn xinh đẹp, tự tin và được yêu thương!','Chúc các bạn nữ của CLB mãi là những đóa hoa kiêu hãnh, vừa dịu dàng vừa mạnh mẽ, cùng nhau tỏa sáng nhé!'],['Chúc các bạn nữ trong team luôn rạng rỡ, mạnh mẽ và tràn đầy năng lượng. Team mình đẹp hơn nhờ có các bạn!','Cảm ơn các bạn vì sự tinh tế, tận tâm và những nụ cười mỗi ngày. Chúc các bạn một ngày 20/10 thật ngọt ngào!','Chúc mọi dự án của các bạn đều thuận lợi, deadline nhẹ như lông hồng và tiền thưởng nặng như vàng nhé!','Hôm nay cả team xin tôn vinh các bạn, những người âm thầm giữ cho mọi thứ vận hành trơn tru và đầy màu sắc.','Chúc các bạn luôn được yêu thương, trân trọng và có thật nhiều thời gian dành cho chính mình!']];
 const EF=[['🌸','🌷','💮','🌺'],['💖','💗','💕','💞'],['✨','⭐','🌟','💫']],
 TH=[0,{l:['#b4540a','#e8a21a','#9a6a00','#ffc46b','#ffe08a','#ffb199'],d:['#ffb347','#ffd86b','#f5c76a','#d48a1c','#a8721a','#d4572a']},{l:['#7b3fd1','#e24fa8','#a8741a','#c9a7ff','#ff9fd0','#9fd0ff'],d:['#b794ff','#ff8fcf','#f5c76a','#7a4fd6','#d6246e','#4f86d6']}],
 V=()=>document.body.classList.contains('view');
 function ap(full){
  if(full){const r=document.documentElement,dk=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;
   ['--acc','--acc2','--gold','--o1','--o2','--o3'].forEach((k,j)=>S.t?r.style.setProperty(k,TH[S.t][dk?'d':'l'][j]):r.style.removeProperty(k));
-  document.querySelectorAll('#th .sw').forEach((b,j)=>b.classList.toggle('on',j===S.t));document.querySelectorAll('#ef .sw').forEach((b,j)=>b.classList.toggle('on',j===S.e));
+  document.querySelectorAll('#th .sw').forEach((b,j)=>b.classList.toggle('on',j===S.t));document.querySelectorAll('#ef .sw').forEach((b,j)=>b.classList.toggle('on',j===S.e));document.querySelectorAll('#kd .sw').forEach((b,j)=>b.classList.toggle('on',j===S.k));
   if(window.th3)th3(S.t);E.splice(0,E.length,...EF[S.e]);ps.forEach(p=>{if(!p.b)p.e=em()})}
- $('#dt').textContent=V()?'Một món quà dành riêng cho bạn':'Tạo trang chúc 20/10 miễn phí';
- $('#hi').textContent=S.n?'Chúc '+S.n:'Chúc các bạn';
+ $('#dt').textContent=V()?['Một món quà dành riêng cho bạn','Một món quà dành tặng cả CLB','Một món quà dành tặng cả team'][S.k]:'Tạo trang chúc 20/10 miễn phí';
+ $('#hi').textContent='Chúc '+(S.n||['bạn','CLB mình','team mình'][S.k]);
  $('#hint').textContent=V()?'Chạm vào hộp quà để mở ↓':'Cuộn xuống để tạo trang chúc ↓';
- $('#gh').textContent=V()?'Hộp quà dành riêng cho bạn 🎁':'Xem trước trang chúc 👀'}
-const rd0=()=>{S.n=$('#rn').value.trim();S.f=$('#sn').value.trim();S.m=$('#msg').value.trim()},ra=()=>WS[Math.random()*WS.length|0];
-function ld(a){S={n:String(a[0]||'').slice(0,24),f:String(a[1]||'').slice(0,24),m:String(a[2]||'').slice(0,280),t:a[3]==1||a[3]==2?+a[3]:0,e:a[4]==1||a[4]==2?+a[4]:0};$('#rn').value=S.n;$('#sn').value=S.f;$('#msg').value=S.m}
+ $('#gh').textContent=V()?(S.k?'Hộp quà dành tặng các bạn 🎁':'Hộp quà dành riêng cho bạn 🎁'):'Xem trước trang chúc 👀';
+ $('#rl').textContent=['Tên người nhận','Tên CLB','Tên team'][S.k];$('#rn').placeholder=['VD: Lan','VD: CLB Bóng chuyền nữ','VD: Team Marketing'][S.k]}
+const rd0=()=>{S.n=$('#rn').value.trim();S.f=$('#sn').value.trim();S.m=$('#msg').value.trim()},ra=()=>{const a=WK[S.k];return a[Math.random()*a.length|0]};
+function ld(a){const c=x=>x==1||x==2?+x:0;S={n:String(a[0]||'').slice(0,30),f:String(a[1]||'').slice(0,30),m:String(a[2]||'').slice(0,280),t:c(a[3]),e:c(a[4]),k:c(a[5])};$('#rn').value=S.n;$('#sn').value=S.f;$('#msg').value=S.m}
 const enc=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),
 dec=s=>JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/')))));
 function sv(v){document.body.classList.toggle('view',v);$('#card').hidden=true;ap(1);scrollTo({top:0,behavior:RM?'auto':'smooth'})}
 ['#rn','#sn','#msg'].forEach(s=>$(s).oninput=()=>{rd0();ap()});
-document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{if(b.parentNode.id==='th')S.t=+b.dataset.t;else S.e=+b.dataset.e;ap(1)});
+document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{const g=b.parentNode.id;if(g==='th')S.t=+b.dataset.t;else if(g==='ef')S.e=+b.dataset.e;else{S.k=+b.dataset.k;if(WK.flat().includes($('#msg').value.trim())){$('#msg').value=ra();rd0()}}ap(1)});
 $('#rnd').onclick=()=>{$('#msg').value=ra();rd0();ap()};
-$('#mkl').onclick=()=>{if(!$('#msg').value.trim())$('#msg').value=ra();rd0();ap();$('#lk').value=location.href.split('#')[0]+'#g='+enc([S.n,S.f,S.m,S.t,S.e]);$('#res').hidden=false};
+$('#mkl').onclick=()=>{if(!$('#msg').value.trim())$('#msg').value=ra();rd0();ap();$('#res').hidden=false;mk()};
 const cp=(v,b)=>{const t=b.textContent,ok=()=>{b.textContent='Đã chép ✓';setTimeout(()=>b.textContent=t,1500)};(navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(ok,()=>{const i=$('#lk'),o=i.value;i.value=v;i.select();document.execCommand('copy');i.value=o;ok()})};
-$('#cp').onclick=e=>cp($('#lk').value,e.target);$('#cc').onclick=e=>cp($('#lk').value.split('g=')[1],e.target);
-$('#sh').onclick=()=>navigator.share?navigator.share({title:'Chúc mừng 20/10',text:'Có một món quà dành cho bạn 🎁',url:$('#lk').value}).catch(()=>{}):$('#cp').click();
+$('#cp').onclick=e=>cp($('#lk').value,e.target);const code=()=>enc([S.n,S.f,S.m,S.t,S.e,S.k]);$('#cc').onclick=e=>cp(code(),e.target);
+function mk(){const h=location.href.split('#')[0],ok=/^(https?|file):/.test(h);$('#lk').value=(ok?h:'https://claude.ai/artifact/VhJNQabgCMXFmWpNJ5mqgz')+'#g='+code();$('#wn').hidden=ok}
+
+$('#sh').onclick=()=>navigator.share?navigator.share({title:'Chúc mừng 20/10',text:'Có một món quà 20/10 dành cho bạn 🎁 '+$('#lk').value}).catch(()=>{}):$('#cp').click();
 $('#pv').onclick=()=>sv(true);$('#mk').onclick=()=>sv(false);
 $('#op').onclick=()=>{const v=$('#cd').value,m=v.match(/g=([\w-]+)/)||v.match(/^\s*([\w-]{8,})\s*$/);try{ld(dec(m[1]));sv(true)}catch(x){$('#cd').value='';$('#cd').placeholder='Mã chưa đúng, thử lại nhé'}};
-const hm=location.hash.match(/g=([\w-]+)/);if(hm)try{ld(dec(hm[1]));document.body.classList.add('view')}catch(x){}
+const hm=(location.hash+(()=>{try{return top.location.hash}catch(x){return ''}})()).match(/g=([\w-]+)/);if(hm)try{ld(dec(hm[1]));document.body.classList.add('view')}catch(x){}
 ap(1);
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -252,16 +258,21 @@ const hs=new T.Shape();	hs.moveTo(0,-.55);hs.bezierCurveTo(-.15,-.4,-.62,-.12,-.
 const hg=new T.ExtrudeGeometry(hs,{depth:.2,bevelThickness:.1,bevelSize:.07,bevelSegments:3,curveSegments:12});hg.center();
 const heart=()=>new T.Mesh(hg,mats[Math.random()*4|0]);
 const heroG=new T.Group(),tilt=new T.Group(),spin=new T.Group(),orbit=new T.Group(),giftG=new T.Group(),gift=new T.Group(),lid=new T.Group();
-heroG.add(tilt,orbit);tilt.add(spin);spin.position.y=-.6;giftG.add(gift);gift.add(lid);gift.position.y=-.45;sc.add(heroG,giftG);
+heroG.add(tilt,orbit);tilt.add(spin);spin.position.y=-.15;spin.scale.setScalar(1.35);giftG.add(gift);gift.add(lid);gift.position.y=-.45;sc.add(heroG,giftG);
 // hoa sen
-const pg=new T.SphereGeometry(1,20,14);pg.scale(.42,1,.13);pg.translate(0,1,0);
-const pa=pg.attributes.position,pc=new Float32Array(pa.count*3),pw=new T.Color(0xfff0f6),pp=new T.Color(0xff2e8a),paint=k=>{pp.set(k);for(let i=0;i<pa.count;i++){const q=pw.clone().lerp(pp,Math.pow(pa.getY(i)/2,1.3));pc.set([q.r,q.g,q.b],i*3)}pg.attributes.color.needsUpdate=true};
+const PU=9,PV=9,pos=[],idx=[];
+for(let j=0;j<=PV;j++){const v=j/PV,w=.6*Math.pow(Math.sin(Math.PI*Math.pow(v,1.6)),.6);for(let i=0;i<=PU;i++){const x=(i/PU*2-1)*w;pos.push(x,v,.38*v*v+.5*x*x)}}
+for(let j=0;j<PV;j++)for(let i=0;i<PU;i++){const a=j*(PU+1)+i,c=a+PU+1;idx.push(a,c,a+1,a+1,c,c+1)}
+const pg=new T.BufferGeometry();pg.setAttribute('position',new T.Float32BufferAttribute(pos,3));pg.setIndex(idx);pg.computeVertexNormals();
+const pa=pg.attributes.position,pc=new Float32Array(pa.count*3),pw=new T.Color(),pp=new T.Color(),paint=k=>{pw.set(k);pp.set(k).lerp(new T.Color(0xffffff),.62);for(let i=0;i<pa.count;i++){const q=pw.clone().lerp(pp,Math.pow(pa.getY(i),1.1));pc.set([q.r,q.g,q.b],i*3)}pg.attributes.color.needsUpdate=true};
 
 pg.setAttribute('color',new T.BufferAttribute(pc,3));paint(0xff2e8a);
-const pm=new T.MeshStandardMaterial({vertexColors:true,roughness:.5,metalness:.05,emissive:0xff2a80,emissiveIntensity:.1});
-[[12,1.45,1.05,.26,-.25],[10,1.05,1.1,0,-.12],[8,.6,.9,.3,0],[6,.18,.64,0,.02]].forEach(([n,tl,s,o,y])=>{for(let i=0;i<n;i++){const pv=new T.Group(),m=new T.Mesh(pg,pm);m.rotation.x=tl;m.scale.setScalar(s);pv.rotation.y=i/n*6.283+o;pv.position.y=y;pv.add(m);spin.add(pv)}});
-const core=new T.Mesh(new T.SphereGeometry(.26,18,14),gold);core.position.y=1.3;spin.add(core);
-for(let i=0;i<14;i++){const a=i/14*6.283,s=new T.Mesh(new T.SphereGeometry(.06,8,6),gold);s.position.set(Math.cos(a)*.5,1.05,Math.sin(a)*.5);spin.add(s)}
+const pm=new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.42,metalness:.05,emissive:0xff2a80,emissiveIntensity:.14}),pms=[];
+for(let k=0;k<30;k++){const t=k/29,pv=new T.Group(),m=new T.Mesh(pg,pm.clone());m.material.color.setScalar(.6+.4*t);pms.push(m.material);m.rotation.x=-.3+1.55*Math.pow(t,1.25);m.scale.setScalar(.55+.85*t);m.position.z=.03+.32*t;pv.rotation.y=k*2.39996;pv.position.y=-.35*t;pv.add(m);spin.add(pv)}
+const lm=new T.MeshStandardMaterial({color:0x2f9e5b,roughness:.6,side:T.DoubleSide});
+for(let i=0;i<5;i++){const pv=new T.Group(),m=new T.Mesh(pg,lm);m.rotation.x=1.7;m.scale.set(.9,1.5,.9);m.position.z=.25;pv.rotation.y=i*1.2566+.3;pv.position.y=-.42;pv.add(m);spin.add(pv)}
+
+
 for(let i=0;i<14;i++){const h=heart(),d=h.userData;d.a=R(0,6.28);d.s=R(.25,.6)*(i%2?1:-1);d.rx=R(2.4,3.2);d.ry=R(1.3,2);d.k=R(.22,.42);h.scale.setScalar(d.k);orbit.add(h)}
 // hộp quà
 const bx=(w,h,d,m,y)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.y=y;return o};
@@ -289,7 +300,7 @@ pool.forEach(h=>{if(!h.visible)return;const d=h.userData;d.t+=dt;d.v.y-=9*giftG.
 rd.render(sc,cam);requestAnimationFrame(fr)}
 fr();
 window.onGift=()=>{const was=lt;lt=0;setTimeout(()=>{lt=1;kick=1;fl=1;spawn()},was?320:40)};
-window.th3=i=>{const c=[[0xff4f9a,0xffa6c9,0xff2e8a],[0xffa21a,0xffdf8a,0xff9a1a],[0xa66bff,0xffa6d8,0xa855f7]][i];[0,1].forEach(j=>{mats[j].color.set(c[j]);mats[j].emissive.set(c[j])});pm.emissive.set(c[2]);paint(c[2])};th3(S.t);
+window.th3=i=>{const c=[[0xff4f9a,0xffa6c9,0xff2e8a],[0xffa21a,0xffdf8a,0xff9a1a],[0xa66bff,0xffa6d8,0xa855f7]][i];[0,1].forEach(j=>{mats[j].color.set(c[j]);mats[j].emissive.set(c[j])});pms.forEach(x=>x.emissive.set(c[2]));paint(c[2])};th3(S.t);
 }catch(err){document.documentElement.classList.add('no3d')}
 </script>
 </body>
