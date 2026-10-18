@@ -248,29 +248,46 @@ ap(1);
 try{
 const T=THREE,rd=new T.WebGLRenderer({canvas:$('#gl'),alpha:true,antialias:true}),sc=new T.Scene(),cam=new T.PerspectiveCamera(40,1,.1,60);
 rd.setPixelRatio(D);cam.position.z=10;
-sc.add(new T.AmbientLight(0xffe4ef,.8));
-const dl=new T.DirectionalLight(0xffffff,.95);dl.position.set(-4,6,8);sc.add(dl);
+sc.add(new T.HemisphereLight(0xfff0f6,0xffb6cf,.32));const rim=new T.DirectionalLight(0xff8fb8,.4);rim.position.set(4,2,-6);sc.add(rim);rd.shadowMap.enabled=true;rd.shadowMap.type=T.PCFSoftShadowMap;
+const dl=new T.DirectionalLight(0xffffff,.7);dl.position.set(-4,6,8);sc.add(dl);dl.castShadow=true;dl.shadow.mapSize.set(1024,1024);const sh=dl.shadow.camera;sh.left=sh.bottom=-4.2;sh.right=sh.top=4.2;sh.far=40;sh.updateProjectionMatrix();dl.shadow.bias=-.0006;dl.shadow.normalBias=.03;
 const pl=new T.PointLight(0xffd36b,0,9);sc.add(pl);
+try{const pg2=new T.PMREMGenerator(rd),es=new T.Scene(),g=new T.SphereGeometry(20,32,16),p=g.attributes.position,cs=[];
+for(let i=0;i<p.count;i++){const y=p.getY(i)/20;cs.push(.32+.26*y,.27+.22*y,.31+.2*y)}
+g.setAttribute('color',new T.Float32BufferAttribute(cs,3));es.add(new T.Mesh(g,new T.MeshBasicMaterial({side:T.BackSide,vertexColors:true})));
+[[8,6,-8,8,8,3],[5,5,10,2,6,1.5],[10,3,0,10,-6,1.2]].forEach(([w,h,x,y,z,k])=>{const m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({color:new T.Color(k,k,k*.95),side:T.DoubleSide}));m.position.set(x,y,z);m.lookAt(0,0,0);es.add(m)});
+sc.environment=pg2.fromScene(es,.03).texture}catch(er){}
 const fit=()=>{rd.setSize(W,H,false);cam.aspect=W/H;cam.updateProjectionMatrix()};fit();addEventListener('resize',fit);
 const M=(c,r,m,e)=>new T.MeshStandardMaterial({color:c,roughness:r,metalness:m,emissive:c,emissiveIntensity:e}),
-mats=[M(0xff4f9a,.3,.2,.2),M(0xffa6c9,.35,.1,.15),M(0xf5c76a,.3,.5,.3),M(0xffffff,.4,.1,.2)],gold=mats[2];
+mats=[M(0xff4f9a,.3,.2,.08),M(0xffa6c9,.35,.1,.06),M(0xf5c76a,.3,.5,.12),M(0xffffff,.4,.1,.08)],gold=mats[2];
 const hs=new T.Shape();	hs.moveTo(0,-.55);hs.bezierCurveTo(-.15,-.4,-.62,-.12,-.62,.2);hs.bezierCurveTo(-.62,.5,-.22,.68,0,.3);hs.bezierCurveTo(.22,.68,.62,.5,.62,.2);hs.bezierCurveTo(.62,-.12,.15,-.4,0,-.55);
 const hg=new T.ExtrudeGeometry(hs,{depth:.2,bevelThickness:.1,bevelSize:.07,bevelSegments:3,curveSegments:12});hg.center();
 const heart=()=>new T.Mesh(hg,mats[Math.random()*4|0]);
 const heroG=new T.Group(),tilt=new T.Group(),spin=new T.Group(),orbit=new T.Group(),giftG=new T.Group(),gift=new T.Group(),lid=new T.Group();
-heroG.add(tilt,orbit);tilt.add(spin);spin.position.y=-.15;spin.scale.setScalar(1.35);giftG.add(gift);gift.add(lid);gift.position.y=-.45;sc.add(heroG,giftG);
+heroG.add(tilt,orbit);tilt.add(spin);spin.position.y=-.1;spin.scale.setScalar(.95);giftG.add(gift);gift.add(lid);gift.position.y=-.45;sc.add(heroG,giftG);
 // hoa sen
-const PU=9,PV=9,pos=[],idx=[];
-for(let j=0;j<=PV;j++){const v=j/PV,w=.6*Math.pow(Math.sin(Math.PI*Math.pow(v,1.6)),.6);for(let i=0;i<=PU;i++){const x=(i/PU*2-1)*w;pos.push(x,v,.38*v*v+.5*x*x)}}
-for(let j=0;j<PV;j++)for(let i=0;i<PU;i++){const a=j*(PU+1)+i,c=a+PU+1;idx.push(a,c,a+1,a+1,c,c+1)}
-const pg=new T.BufferGeometry();pg.setAttribute('position',new T.Float32BufferAttribute(pos,3));pg.setIndex(idx);pg.computeVertexNormals();
-const pa=pg.attributes.position,pc=new Float32Array(pa.count*3),pw=new T.Color(),pp=new T.Color(),paint=k=>{pw.set(k);pp.set(k).lerp(new T.Color(0xffffff),.62);for(let i=0;i<pa.count;i++){const q=pw.clone().lerp(pp,Math.pow(pa.getY(i),1.1));pc.set([q.r,q.g,q.b],i*3)}pg.attributes.color.needsUpdate=true};
+const geos=[],pw=new T.Color(),pp=new T.Color(),wh=new T.Color(0xffffff);
+function pet(t,k){const NU=18,NV=14,pos=[],idx=[],A=2.5-1.15*t,r0=.1+.55*t,fl=-.05+1.5*Math.pow(t,1.2),H=.6+.55*t,y0=-.5*t;
+for(let j=0;j<=NV;j++)for(let i=0;i<=NU;i++){const u=i/NU*2-1,v0=j/NV,v=v0*(1-.3*u*u*u*u-.1*u*u),env=Math.pow(Math.min(1,.2+v0*1.15),.65),a=u*A/2*env,cl=Math.pow(Math.max(0,v0-.78)/.22,2)*t*.32,rf=Math.max(.05,r0+fl*Math.pow(v,1.5)+cl+.03*t*Math.sin(u*6+k*1.7)*v0*v0);pos.push(Math.sin(a)*rf,y0+H*(v-.32*t*v*v)-cl*.5,Math.cos(a)*rf)}
+for(let j=0;j<NV;j++)for(let i=0;i<NU;i++){const a=j*(NU+1)+i,c=a+NU+1;idx.push(a,c,a+1,a+1,c,c+1)}
+const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('color',new T.BufferAttribute(new Float32Array(pos.length),3));g.setIndex(idx);g.computeVertexNormals();g.userData={t,NU,NV};geos.push(g);return g}
+function paint(k){pw.set(k);pp.set(k).lerp(wh,.6);geos.forEach(g=>{const{t,NU,NV}=g.userData,c=g.attributes.color;for(let n=0;n<c.count;n++){const i=n%(NU+1),j=(n/(NU+1))|0,u=Math.abs(i/NU*2-1),v=j/NV,q=pw.clone().lerp(pp,Math.min(1,Math.pow(v,1.4)*.8+u*u*u*.25)).multiplyScalar(.55+.45*t+.1*v);c.setXYZ(n,q.r,q.g,q.b)}c.needsUpdate=true})}
 
-pg.setAttribute('color',new T.BufferAttribute(pc,3));paint(0xff2e8a);
-const pm=new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.42,metalness:.05,emissive:0xff2a80,emissiveIntensity:.14}),pms=[];
-for(let k=0;k<30;k++){const t=k/29,pv=new T.Group(),m=new T.Mesh(pg,pm.clone());m.material.color.setScalar(.6+.4*t);pms.push(m.material);m.rotation.x=-.3+1.55*Math.pow(t,1.25);m.scale.setScalar(.55+.85*t);m.position.z=.03+.32*t;pv.rotation.y=k*2.39996;pv.position.y=-.35*t;pv.add(m);spin.add(pv)}
-const lm=new T.MeshStandardMaterial({color:0x2f9e5b,roughness:.6,side:T.DoubleSide});
-for(let i=0;i<5;i++){const pv=new T.Group(),m=new T.Mesh(pg,lm);m.rotation.x=1.7;m.scale.set(.9,1.5,.9);m.position.z=.25;pv.rotation.y=i*1.2566+.3;pv.position.y=-.42;pv.add(m);spin.add(pv)}
+
+
+
+
+
+const pm=new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.5,metalness:0,emissive:0xff2a80,emissiveIntensity:.03}),pms=[pm];
+const dg=new T.SphereGeometry(.05,12,10),dm=new T.MeshStandardMaterial({color:0xffffff,roughness:.04,metalness:.15,transparent:true,opacity:.55,envMapIntensity:2.5});
+for(let k=0;k<40;k++){const t=k/39,pv=new T.Group(),g=pet(t,k),m=new T.Mesh(g,pm);m.castShadow=m.receiveShadow=true;pv.rotation.y=k*2.39996+R(-.05,.05);pv.add(m);spin.add(pv);if(t>.5&&Math.random()<.35){const n=(9+(R(0,3)|0))*19+8+(R(0,3)|0),pa=g.attributes.position,d=new T.Mesh(dg,dm);d.position.set(pa.getX(n),pa.getY(n),pa.getZ(n));pv.add(d)}}
+const lg=new T.BufferGeometry(),lq=[],li=[],lc=[],c1=new T.Color(0x1d6b39),c2=new T.Color(0x66c26f);
+for(let j=0;j<=10;j++)for(let i=0;i<=6;i++){const u=i/3-1,v=j/10,w=.42*Math.pow(Math.sin(Math.PI*Math.pow(v,.8)),.7)*(1+.05*Math.sin(v*40)),x=u*w,q=c1.clone().lerp(c2,v*.8+Math.abs(u)*.2);lq.push(x,v*1.5,-.5*Math.abs(x)+.25*v*v);lc.push(q.r,q.g,q.b)}
+for(let j=0;j<10;j++)for(let i=0;i<6;i++){const a=j*7+i,c=a+7;li.push(a,c,a+1,a+1,c,c+1)}
+lg.setAttribute('position',new T.Float32BufferAttribute(lq,3));lg.setAttribute('color',new T.Float32BufferAttribute(lc,3));lg.setIndex(li);lg.computeVertexNormals();
+const lm=new T.MeshStandardMaterial({vertexColors:true,side:T.DoubleSide,roughness:.55});
+for(let i=0;i<5;i++){const pv=new T.Group(),m=new T.Mesh(lg,lm);m.rotation.x=1.75;m.position.z=.45;m.castShadow=m.receiveShadow=true;pv.rotation.y=i*1.2566+.4;pv.position.y=-.55;pv.add(m);spin.add(pv)}
+paint(0xe3245f);
+const gm=new T.MeshStandardMaterial({color:0x2e7d45,roughness:.55}),rc=new T.Mesh(new T.SphereGeometry(.36,18,12),gm),st=new T.Mesh(new T.CylinderGeometry(.07,.1,1.2,12),gm);rc.scale.y=.75;rc.position.y=-.6;st.position.y=-1.2;rc.castShadow=st.castShadow=true;spin.add(rc,st);
 
 
 for(let i=0;i<14;i++){const h=heart(),d=h.userData;d.a=R(0,6.28);d.s=R(.25,.6)*(i%2?1:-1);d.rx=R(2.4,3.2);d.ry=R(1.3,2);d.k=R(.22,.42);h.scale.setScalar(d.k);orbit.add(h)}
@@ -300,7 +317,7 @@ pool.forEach(h=>{if(!h.visible)return;const d=h.userData;d.t+=dt;d.v.y-=9*giftG.
 rd.render(sc,cam);requestAnimationFrame(fr)}
 fr();
 window.onGift=()=>{const was=lt;lt=0;setTimeout(()=>{lt=1;kick=1;fl=1;spawn()},was?320:40)};
-window.th3=i=>{const c=[[0xff4f9a,0xffa6c9,0xff2e8a],[0xffa21a,0xffdf8a,0xff9a1a],[0xa66bff,0xffa6d8,0xa855f7]][i];[0,1].forEach(j=>{mats[j].color.set(c[j]);mats[j].emissive.set(c[j])});pms.forEach(x=>x.emissive.set(c[2]));paint(c[2])};th3(S.t);
+window.th3=i=>{const c=[[0xff4f9a,0xffa6c9,0xe3245f],[0xffa21a,0xffdf8a,0xff9a1a],[0xa66bff,0xffa6d8,0xa855f7]][i];[0,1].forEach(j=>{mats[j].color.set(c[j]);mats[j].emissive.set(c[j])});pms.forEach(x=>x.emissive.set(c[2]));paint(c[2])};th3(S.t);
 }catch(err){document.documentElement.classList.add('no3d')}
 </script>
 </body>
